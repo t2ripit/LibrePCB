@@ -151,13 +151,14 @@ QList<BI_Base*> BoardEditorState::findItemsAtPos(
   // priorities (0 = highest priority):
   //
   //     0: vias
+  //     3: THT pads
   //     5: holes
   //    50: polygons/texts board layer
   //   110: netpoints top
   //   120: netlines top
   //   130: planes top
   //   140: footprints top
-  //   150: pads top
+  //   150: SMT pads top
   //   160: polygons/texts top
   //   210: netpoints inner
   //   220: netlines inner
@@ -167,17 +168,18 @@ QList<BI_Base*> BoardEditorState::findItemsAtPos(
   //   320: netlines bottom
   //   330: planes bottom
   //   340: footprints bottom
-  //   350: pads bottom
+  //   350: SMT pads bottom
   //   360: polygons/texts bottom
   //
   // So the system is:
   //      0 for vias
+  //      3 for THT pads
   //      5 for holes
   //     10 for netpoints
   //     20 for netlines
   //     30 for planes
   //     40 for footprints
-  //     50 for pads
+  //     50 for SMT pads
   //     60 for polygons/texts
   //   +100 for top layer items
   //   +200 for inner layer items
@@ -326,11 +328,16 @@ QList<BI_Base*> BoardEditorState::findItemsAtPos(
               (!netsignals.contains(pad->getCompSigInstNetSignal()))) {
             continue;
           }
-          if (cuLayer && (!pad->isOnLayer(cuLayer->getName()))) {
-            continue;
+
+          if (pad->getLibPad().isTht()) {
+            processItem(pad, pad->getPosition(), 3);
+          } else {
+            if (cuLayer && (!pad->isOnLayer(cuLayer->getName()))) {
+              continue;
+            }
+            processItem(pad, pad->getPosition(),
+                        50 + (pad->getMirrored() ? 300 : 100));
           }
-          processItem(pad, pad->getPosition(),
-                      50 + (pad->getMirrored() ? 300 : 100));
         }
       }
       if (flags.testFlag(FindFlag::StrokeTexts)) {
